@@ -1,0 +1,12 @@
+
+POST http://localhost:4003/products
+Content-Type: application/json
+
+{
+    "product":"Laptop",
+    "description":"Dell Laptop"
+}
+
+###
+
+GET http://localhost:4003/products
