@@ -3,10 +3,28 @@ POST http://localhost:4003/products
 Content-Type: application/json
 
 {
-    "product":"Laptop",
-    "description":"Dell Laptop"
+    "product":"Test Product",
+    "description":"Dell Desktop"
 }
 
 ###
 
 GET http://localhost:4003/products
+
+
+###
+
+GET http://localhost:4003/products/41ca4e67-c9fe-49e3-970d-e3b24858cb5b
+
+
+####
+PUT http://localhost:4003/products/update/41ca4e67-c9fe-49e3-970d-e3b24858cb5b
+Content-Type: application/json
+
+{
+    "product":"Updated Laptop",
+    "description":"Updated Dell Laptop"
+}
+
+###
+DELETE http://localhost:4003/products/af867684-cfec-4a8f-9eed-df87476f8069

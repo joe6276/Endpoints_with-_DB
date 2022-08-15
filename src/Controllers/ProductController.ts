@@ -2,6 +2,8 @@ import { Request, RequestHandler, Response } from 'express'
 import mssql from 'mssql'
 import { v4 as uid } from 'uuid'
 import { sqlConfig } from '../Config/Config'
+import Connection from '../DatabaseHelpers/db'
+const db = new Connection()
 
 interface ExtendedRequest extends Request {
   body: {
@@ -13,14 +15,7 @@ export const insertProduct = async (req: ExtendedRequest, res: Response) => {
   try {
     const id = uid()
     const { product, description } = req.body
-    const pool = await mssql.connect(sqlConfig)
-    await pool
-      .request()
-      .input('id', mssql.VarChar, id)
-      .input('product', mssql.VarChar, product)
-      .input('description', mssql.VarChar, description)
-      .execute('insertProducts')
-
+    db.exec('insertProducts',{id,product,description})
     res.json({ message: 'Product Inserted Successfully' })
   } catch (error) {
     res.json({ error })
@@ -29,9 +24,7 @@ export const insertProduct = async (req: ExtendedRequest, res: Response) => {
 
 export const getProducts: RequestHandler = async (req, res) => {
   try {
-    const pool = await mssql.connect(sqlConfig)
-    const products = await pool.request().execute('getProducts')
-    const { recordset } = products
+    const {recordset} =await db.exec('getProducts')
     res.json(recordset)
   } catch (error) {
     res.json({ error })
@@ -41,13 +34,8 @@ export const getProducts: RequestHandler = async (req, res) => {
 export const getProduct: RequestHandler<{ id: string }> = async (req, res) => {
   try {
     const id = req.params.id
-    const pool = await mssql.connect(sqlConfig)
-    const products = await pool
-      .request()
-      .input('id', mssql.VarChar, id)
-      .execute('getProduct')
-    const { recordset } = products
-    if (!products.recordset[0]) {
+    const {recordset} =await db.exec('getProduct',{id})
+    if (!recordset[0]) {
       res.json({ message: 'Product Not Found' })
     } else {
       res.json(recordset)
@@ -62,25 +50,16 @@ export const updateProduct: RequestHandler<{ id: string }> = async (
   res,
 ) => {
   try {
-    const id =req.params.id
-    const pool = await mssql.connect(sqlConfig)
+    const id= req.params.id
     const { product, description } = req.body as {
       product: string
       description: string
     }
-      const products = await pool
-      .request()
-      .input('id', mssql.VarChar, id)
-      .execute('getProduct')
-      if(!products.recordset[0]){
+       const {recordset} =await db.exec('getProduct',{id})
+      if(!recordset[0]){
          res.json({ message: 'Product Not Found' })
       }else{
-
-        await pool.request()
-          .input('id', mssql.VarChar, id)
-          .input('product', mssql.VarChar, product)
-          .input('description', mssql.VarChar, description)
-          .execute('updateProduct')
+         await  db.exec('updateProduct',{id,product,description})
           res.json({message:'Product Updated ...'})
       }
  
@@ -95,19 +74,16 @@ export const updateProduct: RequestHandler<{ id: string }> = async (
 export const deleteProduct:RequestHandler<{id:string}> =async(req,res)=>{
     try {
         const id = req.params.id
-        const pool = await mssql.connect(sqlConfig)
-      
-        const products = await pool
-      .request()
-      .input('id', mssql.VarChar, id)
-      .execute('getProduct')
-      if(!products.recordset[0]){
+        const {recordset} =await db.exec('getProduct',{id})
+        if(!recordset[0]){
          res.json({ message: 'Product Not Found' })
-      }else{
-          // await pool.request().query(`DELETE FROM Products WHERE id='${id}'`)
-        await pool.request()
-        .input('id', mssql.VarChar, id)
-        .execute('deleteProduct')
+        }else{
+          // Procedure Way
+        //   await db.exec('deleteProduct', {id})
+        // res.json({message:'Product Deleted'})
+
+        // Query Way
+        await db.query(`DELETE FROM Products WHERE id='${id}'`)
         res.json({message:'Product Deleted'})
       }
     } catch (error:any) {
